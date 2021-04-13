@@ -1,0 +1,9 @@
+#!/bin/bash
+
+backup_dir_date="$(date +'%d-%m-%Y')"
+backup_name="$(date +'%d-%m-%Y %H:%M:%S')"
+username=$USER                                                                 # You can change this to the name of the backups folder
+source=$HOME                                                                   # By default, backups the /home of your current user
+dest=your_gdrive_remote_name:/$USER/$backup_dir_date                           # Creates a folder with the username, and another folder with the day in DD/MM/YYYY format
+
+bash backup -n "$backup_name" -u "$dest" -e "*.log" -e "*.tmp" -r -y "$source" # Launches the backup, by default it excludes .log and .tmp files, you can add more with -e "to_exclude"
