@@ -1,6 +1,11 @@
 # Changelog
 All notable changes to the script will be documented here
 
+## 1.3.0 - [2021-04-13] 
+* Added ability to use a external config file
+* Refactored the script to make it more readable
+* Added examples
+
 ## 1.2.0 - [2020-06-18] 
 * Added Pushbullet notifications support using the `-p` argument
 * Added `-y` argument to skip warnings (which by default, require user input to continue)
