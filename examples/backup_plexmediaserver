@@ -1,0 +1,8 @@
+#!/bin/bash
+
+backup_dir_date="$(date +'%d-%m-%Y')"
+backup_name="$(date +'%d-%m-%Y %H:%M:%S')"
+source=/var/lib/plexmediaserver                                                                     # Set it to your plexmediaserver folder, if different
+dest=your_gdrive_remote_name:/plexmediaserver/$backup_dir_date                                      # Creates a folder named plexmediaserver, and another folder with the day in DD/MM/YYYY format
+
+bash backup -n "$backup_name" -u "$dest" -e "*/Caches/*" -e "*/Cache/*" -e "*/Logs/*" -r -y $source # Launches the backup, by default it excludes Caches, Cache and Logs folders, you can add more with -e "to_exclude"
