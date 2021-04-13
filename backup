@@ -30,35 +30,52 @@
 ##
 ##  Examples:
 ##    backup "/home/user/important_stuff"
-##    backup -u "GDrive:/Backups" -r -y -p "XXXXXXXXXXXXXXXX" "/home/user/important_stuff/" 
+##    backup -u "GDrive:/Backups" -r -y -p "XXXXXXXXXXXXXXXX" "/home/user/important_stuff/"
 ##    backup -n "important-stuff-backup" -s "/home/user/backups" -e "*.pdf" -e "important_stuff/dont_backup_this_folder" "/home/user/important_stuff/"
 ##
 ## --------- Configuration ------------
-BACKUP_NAME="backup" # backup file name. date will be added to file name after this string
-BACKUP_FOLDER="" # folder to backup (full path)
-EXCLUDES=() # array to store exclusion patterns. example: ("*.mkv" "*.pdf" "important_stuff/dont_backup_this_folder")
-SAVE_FOLDER="$PWD" # folder to save backup file to (full path)
-RCLONE_FOLDER="" # path to rclone folder to which backup file will be uploaded to. leave empty to skip the upload process
-PUSHBULLET_API_KEY="" # Pusbullet API key for Pushbullet notifications
-REMOVE_LOCAL=false # remove local backup file after upload
-SKIP_WARNINGS=false # skip warnings (warnings require user input to continue)
-VERBOSE=false # use verbose when running tar and rclone
-PUSHBULLET_TITLE="Backup Script" # Pusbullet - notification title
-PUSHBULLET_MESSAGE_START="Backup script " # Pushbullet - notification messages will start with this string, followed by one of the followings
+# Importing variables from config file, if there is one
+# From https://github.com/Unimatrix0/update_ombi/blob/master/update_ombi.sh
+CONFIGFILE="$(dirname $0)/update_ombi.conf"
+if [ -e $CONFIGFILE ]; then
+  source $CONFIGFILE >/dev/null 2>&1
+  echo "Script config file found...parsing..."
+  if [ $? -ne 0 ]; then
+    echo "Unable to use config file...using defaults..."
+  else
+    echo "Parsed config file"
+  fi
+else
+  echo "No config file found...using defaults..."
+fi
+BACKUP_NAME="backup"                                         # backup file name. date will be added to file name after this string
+BACKUP_FOLDER=""                                             # folder to backup (full path)
+EXCLUDES=()                                                  # array to store exclusion patterns. example: ("*.mkv" "*.pdf" "important_stuff/dont_backup_this_folder")
+SAVE_FOLDER="$PWD"                                           # folder to save backup file to (full path)
+RCLONE_FOLDER=""                                             # path to rclone folder to which backup file will be uploaded to. leave empty to skip the upload process
+PUSHBULLET_API_KEY=""                                        # Pusbullet API key for Pushbullet notifications
+REMOVE_LOCAL=false                                           # remove local backup file after upload
+SKIP_WARNINGS=false                                          # skip warnings (warnings require user input to continue)
+VERBOSE=false                                                # use verbose when running tar and rclone
+PUSHBULLET_TITLE="Backup Script"                             # Pusbullet - notification title
+PUSHBULLET_MESSAGE_START="Backup script "                    # Pushbullet - notification messages will start with this string, followed by one of the followings
 PUSHBULLET_MESSAGE_FINISHED_SUCCESS="finished successfully." # Pusbullet - message will be shown if script finished successfully
-PUSHBULLET_MESSAGE_FINISHED_ERRORS="finished with errors." # Pusbullet - message will be shown if script finished with errors
-PUSHBULLET_MESSAGE_FAIL="failed." # Pusbullet - message will be shown if script failed
+PUSHBULLET_MESSAGE_FINISHED_ERRORS="finished with errors."   # Pusbullet - message will be shown if script finished with errors
+PUSHBULLET_MESSAGE_FAIL="failed."                            # Pusbullet - message will be shown if script failed
 ## ------------------------------------
 
-usage() { echo "Usage: $(basename $0) [-n <name>] [-s <path>] [-e <pattern>]... [-u <path>] [-p <API key>] [-r] [-y] [-v] <path-to-backup>
-Use $(basename $0) -h for additional info."; exit 1; }
+usage() {
+  echo "Usage: $(basename $0) [-n <name>] [-s <path>] [-e <pattern>]... [-u <path>] [-p <API key>] [-r] [-y] [-v] <path-to-backup>
+Use $(basename $0) -h for additional info."
+  exit 1
+}
 
 # if there is a Pushbullet API key, send a Pushbullet notification. uses a parameter for message's body
 pushbullet() { if [ -n "$PUSHBULLET_API_KEY" ]; then curl -u "$PUSHBULLET_API_KEY": https://api.pushbullet.com/v2/pushes -d type=note -d \
- title="$PUSHBULLET_TITLE" -d body="$PUSHBULLET_MESSAGE_START$1 " >/dev/null 2>&1; fi }
+  title="$PUSHBULLET_TITLE" -d body="$PUSHBULLET_MESSAGE_START$1 " >/dev/null 2>&1; fi; }
 
-ERROR=false # sets to true if there's an error. used for final exit code of the script
-C0='\033[0m' # ANSI - no color
+ERROR=false     # sets to true if there's an error. used for final exit code of the script
+C0='\033[0m'    # ANSI - no color
 C1='\033[0;32m' # ANSI - success - green
 C2='\033[1;31m' # ANSI - error - red
 C3='\033[0;36m' # ANSI - information - cyan
@@ -66,32 +83,32 @@ C4='\033[0;33m' # ANSI - variables/paths - orange
 
 while getopts ":n:e:s:u:p:ryvh" arg; do
   case $arg in
-    n)
-      BACKUP_NAME=${OPTARG}
-      ;;
-    e)
-      EXCLUDES+=("${OPTARG}")
-      ;;
-    s)
-      SAVE_FOLDER=${OPTARG}
-      ;;
-    u)
-      RCLONE_FOLDER=${OPTARG}
-      ;;
-    p)
-      PUSHBULLET_API_KEY=${OPTARG}
-      ;;
-    r)
-      REMOVE_LOCAL=true
-      ;;
-    y)
-      SKIP_WARNINGS=true
-      ;;
-    v)
-      VERBOSE=true
-      ;;
-    h)
-      echo " Usage: $(basename $0) [-n <name>] [-s <path>] [-e <pattern>]... [-u <path>] [-p <API key>] [-r] [-y] [-v] <path-to-backup>
+  n)
+    BACKUP_NAME=${OPTARG}
+    ;;
+  e)
+    EXCLUDES+=("${OPTARG}")
+    ;;
+  s)
+    SAVE_FOLDER=${OPTARG}
+    ;;
+  u)
+    RCLONE_FOLDER=${OPTARG}
+    ;;
+  p)
+    PUSHBULLET_API_KEY=${OPTARG}
+    ;;
+  r)
+    REMOVE_LOCAL=true
+    ;;
+  y)
+    SKIP_WARNINGS=true
+    ;;
+  v)
+    VERBOSE=true
+    ;;
+  h)
+    echo " Usage: $(basename $0) [-n <name>] [-s <path>] [-e <pattern>]... [-u <path>] [-p <API key>] [-r] [-y] [-v] <path-to-backup>
  Options:
    -n <name>     Sets the tar.gz file name (date is added) [default: "backup"]
    -s <path>     Path to which the generated backup file will be saved to [default: current working directory]
@@ -109,35 +126,35 @@ while getopts ":n:e:s:u:p:ryvh" arg; do
    $(basename $0) \"/home/user/important_stuff\"
    $(basename $0) -u \"GDrive:/Backups\" -r -y -p \"XXXXXXXXXXXXXXXX\" \"/home/user/important_stuff/\" 
    $(basename $0) -n \"important-stuff-backup\" -s \"/home/user/backups\" -e \"*.pdf\" -e \"important_stuff/dont_backup_this_folder\" \"/home/user/important_stuff/\""
-      exit 0
-      ;;
-    *)
-      usage
-      ;;
+    exit 0
+    ;;
+  *)
+    usage
+    ;;
   esac
 done
 
 # positional argument - the folder that's going to be backed-up
 if [[ -n "${@:$OPTIND:1}" ]]; then BACKUP_FOLDER=${@:$OPTIND:1}; fi
 # if no backup folder was chosen, show usage
-if [ -z "$BACKUP_FOLDER" ]; then usage; fi 
+if [ -z "$BACKUP_FOLDER" ]; then usage; fi
 # if BACKUP_FOLDER path doesn't exist, show error and exit
-if [ ! -d $BACKUP_FOLDER ]; then 
+if [ ! -d $BACKUP_FOLDER ]; then
   echo -e "${C2}Folder ${C4}$BACKUP_FOLDER ${C2}not found${C0}"
   pushbullet "$PUSHBULLET_MESSAGE_FAIL"
   exit 1
 fi
 # if SAVE_FOLDER path doesn't exist, show error and exit
-if [ ! -d $SAVE_FOLDER ]; then 
+if [ ! -d $SAVE_FOLDER ]; then
   echo -e "${C2}Folder ${C4}$SAVE_FOLDER ${C2}not found${C0}"
   pushbullet "$PUSHBULLET_MESSAGE_FAIL"
   exit 1
 fi
 # if BACKUP_FOLDER path ends with a '/', remove it
-if [ "${BACKUP_FOLDER: -1}" = "/" ]; then BACKUP_FOLDER=${BACKUP_FOLDER%?}; fi 
+if [ "${BACKUP_FOLDER: -1}" = "/" ]; then BACKUP_FOLDER=${BACKUP_FOLDER%?}; fi
 # if SAVE_FOLDER path ends with a '/', remove it
 if [ "${SAVE_FOLDER: -1}" = "/" ]; then SAVE_FOLDER=${SAVE_FOLDER%?}; fi
- # if REMOVE_LOCAL is set to true, but rclone upload is not used, show a warning.
+# if REMOVE_LOCAL is set to true, but rclone upload is not used, show a warning.
 if [ "$REMOVE_LOCAL" = true ] && [ -z "$RCLONE_FOLDER" ] && [] "$SKIP_WARNINGS" = false ]; then
   read -p "WARNING: '-r' argument to remove local backup file was used,
   but no rclone path to upload backup flie to beforehand is set.
@@ -152,11 +169,12 @@ fi
 echo -e "$(date +"%Y/%m/%d %T") ${C3}Generating tar.gz file"${C0}
 FILENAME="${BACKUP_NAME}-$(date +%FT%H%M).tar.gz"
 # generate a temporary file to store EXCLUDES in
-EXCLUEDS_FILE=$(mktemp /tmp/backup.XXXXXX.txt) 
-if [ ! ${#EXCLUDES[@]} -eq 0 ]; then printf "%s\n" "${EXCLUDES[@]}" > "$EXCLUEDS_FILE"; fi
+EXCLUEDS_FILE=$(mktemp /tmp/backup.XXXXXX.txt)
+if [ ! ${#EXCLUDES[@]} -eq 0 ]; then printf "%s\n" "${EXCLUDES[@]}" >"$EXCLUEDS_FILE"; fi
 
 # run tar with or without '-v', according to VERBOSE value
-if [ "$VERBOSE" = true ]; then tar -cvzf "$SAVE_FOLDER/$FILENAME" -C "$BACKUP_FOLDER/.." -X $EXCLUEDS_FILE "$(basename "$BACKUP_FOLDER")"; \
+if [ "$VERBOSE" = true ]; then
+  tar -cvzf "$SAVE_FOLDER/$FILENAME" -C "$BACKUP_FOLDER/.." -X $EXCLUEDS_FILE "$(basename "$BACKUP_FOLDER")"
 else tar -czf "$SAVE_FOLDER/$FILENAME" -C "$BACKUP_FOLDER/.." -X $EXCLUEDS_FILE "$(basename "$BACKUP_FOLDER")"; fi
 
 # remove temporary file
@@ -166,9 +184,9 @@ rm $EXCLUEDS_FILE
 if [ "$?" = 0 ]; then
   echo -e "$(date +"%Y/%m/%d %T") ${C1}Backup file generated and saved successfully to ${C4}$SAVE_FOLDER/$FILENAME ($(du -h "$SAVE_FOLDER/$FILENAME" | cut -f1))${C0}"
 # tar commmand didn't run successfully (exit code != 0)
-else 
+else
   echo -e "$(date +"%Y/%m/%d %T") ${C2}Backup file generation failed${C0}"
-# if a file was generated during the (failed) tar process, remove it
+  # if a file was generated during the (failed) tar process, remove it
   if [ -f "$SAVE_FOLDER/$FILENAME" ]; then rm "$SAVE_FOLDER/$FILENAME"; fi
   pushbullet "$PUSHBULLET_MESSAGE_FAIL"
   exit 1
@@ -207,7 +225,7 @@ fi
 if [ "$ERROR" = false ]; then
   echo -e "$(date +"%Y/%m/%d %T") ${C1}Script finished successfully${C0}"
   pushbullet "$PUSHBULLET_MESSAGE_FINISHED_SUCCESS"
-  exit 0;
+  exit 0
 
 else
   echo -e "$(date +"%Y/%m/%d %T") ${C2}Script finished with errors${C0}"
