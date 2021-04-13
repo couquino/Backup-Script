@@ -1,12 +1,15 @@
 # Backup-Script
 
+**This repo is forked from https://github.com/MichaelYochpaz/Backup-Script i've just made some improvements for my daily use.
+Your pull requests and bug reports are welcome**
+
 ![backup-script](https://user-images.githubusercontent.com/8832013/84669169-3bce8200-af2d-11ea-850c-d40e2521e6d5.png)
 
 A Bash script to generate a tar.gz backup file of a folder, with an option to automatically upload the backup file to a cloud service using [rclone](https://github.com/rclone/rclone), and remove local copy afterwards.
 
 List of cloud/storage providers currently supported by rclone can be found [here](https://github.com/rclone/rclone#storage-providers).
 
-Latest version: 1.2.0 ([changelog](https://github.com/MichaelYochpaz/Backup-Script/blob/master/changelog.md))
+Latest version: 1.3.0 ([changelog](https://github.com/couquino/Backup-Script/blob/master/changelog.md))
 ## Features
 * Generate a tar.gz backup file of a folder
 * Exclude specific folders / patterns
@@ -24,6 +27,7 @@ Latest version: 1.2.0 ([changelog](https://github.com/MichaelYochpaz/Backup-Scri
 ## Usage
 Configuration can be set on the script itself, under the "Configuration" section, to run the script without any argument,  
 or using command-line arguments (which will override configuration set on on the script).
+You can also set your configuration variables in a *config_backup.conf* file
 ```
  Usage: backup [-n <name>] [-s <path>] [-e <pattern>]... [-u <path>] [-r] [-v] <path-to-backup>
 
@@ -44,6 +48,7 @@ or using command-line arguments (which will override configuration set on on the
  backup "/home/user/important_stuff"
  backup -u "GDrive:/Backups" -r -y -p "XXXXXXXXXXXXXXXX" "/home/user/important_stuff/" 
  backup -n "important-stuff-backup" -s "/home/user/backups" -e "*.pdf" -e "important_stuff/dont_backup_this_folder" "/home/user/important_stuff/"
+ Examples scripts are also availible here https://github.com/couquino/Backup-Script/tree/master/examples
 ```
 
 ## FAQ
@@ -54,4 +59,4 @@ or using command-line arguments (which will override configuration set on on the
 **A:** Go to your Pushbullet account's [settings page](https://www.pushbullet.com/#settings/account), and click the "Create Access Token" button.
 
 **Q:** I found a bug, or have an idea for a feature. How can I help?  
-**A:** Feel free to open an [issue](https://github.com/MichaelYochpaz/Backup-Script/issues) with bug reports and suggestions.
+**A:** Feel free to open an [issue](https://github.com/couquino/Backup-Script/issues) with bug reports and suggestions.
