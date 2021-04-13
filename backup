@@ -34,6 +34,20 @@
 ##    backup -n "important-stuff-backup" -s "/home/user/backups" -e "*.pdf" -e "important_stuff/dont_backup_this_folder" "/home/user/important_stuff/"
 ##
 ## --------- Configuration ------------
+# Importing variables from config file, if there is one
+# From https://github.com/Unimatrix0/update_ombi/blob/master/update_ombi.sh
+CONFIGFILE="$(dirname $0)/update_ombi.conf"
+if [ -e $CONFIGFILE ]; then
+    source $CONFIGFILE > /dev/null 2>&1
+    echo "Script config file found...parsing..."
+    if [ $? -ne 0 ] ; then
+        echo "Unable to use config file...using defaults..."
+    else
+        echo "Parsed config file"
+    fi
+else
+    echo "No config file found...using defaults..."
+fi
 BACKUP_NAME="backup" # backup file name. date will be added to file name after this string
 BACKUP_FOLDER="" # folder to backup (full path)
 EXCLUDES=() # array to store exclusion patterns. example: ("*.mkv" "*.pdf" "important_stuff/dont_backup_this_folder")
